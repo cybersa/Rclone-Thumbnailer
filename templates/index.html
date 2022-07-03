@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ remote }}:{{ path }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.10.5/viewer.min.css" integrity="sha512-3NbO5DhK9LuM6wu+IZvV5AYXxqSmj/lfLLmHMV9t18ij+MfmhhxeYEunHllEu+TFJ4tJM5D0DhazM2EGGGvNmQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.10.5/viewer.min.js" integrity="sha512-i5q29evO2Z4FHGCO+d5VLrwgre/l+vaud5qsVqQbPXvHmD9obORDrPIGFpP2+ep+HY+z41kAmVFRHqQAjSROmA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+    <div class="fixed-bottom">
+        <div class="container">
+            <div class="row">
+                <div class="col-1 offset-md-8">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        Upload
+                    </button>
+                </div>
+                <div class="col-2">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mkdirModal">
+                        Create Directory
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="margin-bottom: 40px;">
+        <h1>{{ remote }}:{{ path }}</h1>
+
+        <div class="row" id="galley">
+            {% for file in files: %}
+            <div class="col-3 m-1">
+                
+                
+
+                {% if file.MimeType.startswith("image/") and not file.MimeType.startswith("image/vnd.") %}
+
+                    {% if is_exists("static/thumbs/%s/%s/%s"%(remote,path,file.Name)) %}
+
+                    <img class="img-thumbnail" data-original="{{ api_url }}/[{{ remote }}:{{ path }}]/{{file.Name}}" src='/static/thumbs/{{remote}}/{{path}}/{{file.Name}}' alt='{{file.Name}}' title="{{file.Name}}">
+
+                    {% else %}
+
+                    <span class="position-absolute top-0 start-0 badge rounded-pill bg-secondary">{{file.Name}}</span>
+                    <img class="img-thumbnail no-thumbnail" data-original="{{ api_url }}/[{{ remote }}:{{ path }}]/{{file.Name}}" data-file-name="{{file.Name}}" src='/static/images/file.png' alt='{{file.Name}}'>
+
+                    {% endif %}
+
+                {% else %}
+
+                    {% if file.IsDir %}
+
+                    <a class="btn btn-primary" role="button" href="/view/{{ remote }}?path={{url_encode(path)}}/{{url_encode(file.Name)}}" alt='{{file.Name}}'>{{file.Name}}</a>
+
+                    {% else %}
+
+                    <a class="btn btn-primary" role="button" href="{{ api_url }}/[{{ remote }}:{{ path }}]/{{file.Name}}" target="_blank" alt='{{file.Name}}' data-bs-toggle="modal" data-bs-target="#videoModal" data-bs-url="{{ api_url }}/[{{ remote }}:{{ path }}]/{{file.Name}}" data-bs-type="{{file.MimeType}}">{{file.Name}}</a>
+
+                    {% endif %}
+
+                    
+
+                {% endif %}
+
+            </div>
+            {% endfor %}
+        </div>        
+
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Upload files</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>                    
+                        <div class="modal-body">
+                            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">Select one or more files:</label>
+                                <input type="file" class="form-control" name="file" multiple>
+                            </div>
+                            <input type="text" name="remote" value="{{remote}}" hidden>
+                            <input type="text" name="path" value="{{path}}" hidden>
+                        </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" onclick="upload(this)" class="btn btn-primary">Upload files</button>
+                        </div>                    
+                </div>
+            </div>
+        </div>    
+
+        <div class="modal fade" id="mkdirModal" tabindex="-1" aria-labelledby="mkdirModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="mkdirModalLabel">Upload files</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>                    
+                        <div class="modal-body">
+                            <form method="post" id="mkdirForm">
+                            <div class="mb-3">
+                                <label for="recipient-name" class="col-form-label">Folder Name:</label>
+                                <input type="text" class="form-control" name="name">
+                            </div>
+                        </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" onclick="mkdir(this)" class="btn btn-primary">Create</button>
+                        </div>                    
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="videoModalLabel">Video Files</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>                    
+                        <div class="modal-body">
+                             <video width="100%" height="240" controls id="videoPlayer">
+                                <source src="" type="" id="videoElement">
+                            </video> 
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>                    
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script type="text/javascript">    
+
+    const remote="{{remote}}"
+    const path="{{path}}"
+
+    var videoModal = document.getElementById('videoModal')
+    videoModal.addEventListener('show.bs.modal', function (event) {
+      // Button that triggered the modal
+      var button = event.relatedTarget
+      // Extract info from data-bs-* attributes
+      var url = button.getAttribute('data-bs-url')
+      var type = button.getAttribute('data-bs-type')
+      console.log(url)
+      console.log(type)
+      // If necessary, you could initiate an AJAX request here
+      // and then do the updating in a callback.
+      //
+      // Update the modal's content.
+      modal_body=videoModal.querySelector('.modal-body');
+      document.getElementById("videoPlayer").remove();
+      modal_body.innerHTML='<video width="100%" height="240" controls id="videoPlayer"><source src="'+url+'" type="'+type+'" id="videoElement"></video>'      
+    })
+
+    videoModal.addEventListener('hide.bs.modal', function (event) {
+      var videoSource = videoModal.querySelector('#videoPlayer')      
+      videoSource.pause()      
+    })
+    
+
+    //Upload Function
+    async function upload(button) {
+        button.disabled= true;
+        button.innerHTML="Uploading..."
+
+        const formData = new FormData(document.getElementById('uploadForm'));
+
+        const response = await axios({
+            url: "/upload",
+            method: 'post',
+            data: formData,
+            headers: {"Content-Type": "multipart/form-data"}
+        })
+
+        if(response["status"]==200)
+        {            
+            var myModalEl = document.getElementById('exampleModal')
+            var modal = bootstrap.Modal.getInstance(myModalEl)
+            modal.hide()
+            location.reload()
+        }
+        else
+        {
+
+        }
+    }
+
+    //Upload Function
+    async function mkdir(button) {
+        button.disabled= true;
+        button.innerHTML="Creating..."
+
+        const formData = new FormData(document.getElementById('mkdirForm'));        
+
+        const response = await axios({
+            url: "/mkdir/"+formData.get("name"),
+            method: 'post',
+            data: {"remote":remote , "path":path}            
+        })
+
+        if(response["status"]==200)
+        {            
+            var myModalEl = document.getElementById('mkdirModal')
+            var modal = bootstrap.Modal.getInstance(myModalEl)
+            modal.hide()
+            location.reload()
+        }
+        else
+        {
+
+        }
+    }
+
+    //Generate Thumbnails
+    async function thumbnail_generate() {
+        const imageNodes=document.querySelectorAll("img.no-thumbnail");
+        
+        for(var i=0;i<imageNodes.length;i++)
+        {
+
+            image=imageNodes[i];
+            file_name=image.getAttribute("data-file-name");
+
+            const response = await axios({
+                url: "/thumbnail/generate",
+                method: 'post',
+                data: {"remote":remote,"path":path,"files":[file_name]}
+            })
+
+            if(response["status"]==200)
+            {            
+                console.log("Thumbnail generated")
+                image.src="/static/thumbs/"+remote+"/"+path+"/"+file_name;
+                console.log(image)
+            }
+            else
+            {
+                console.log(response)
+            }
+        }
+    }
+
+    thumbnail_generate()
+
+
+    </script>
+    <script type="text/javascript">
+    const viewer = new Viewer(document.getElementById('galley'), {
+        url: 'data-original',
+        title: function(image) {
+            return image.alt + ' (' + (this.index + 1) + '/' + this.length + ')';
+        },
+    });
+
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+</body>
+
+</html>

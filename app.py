@@ -115,7 +115,7 @@ def upload():
                     files = {'file':(filename, file.read())})
                     print(response.content)
                     
-                thumbnail(save_path,"static/thumbs/%s%s"%(remote,remote_path))
+                thumbnail(save_path,"static/thumbs/%s%s/"%(remote,remote_path))
 
         return {"status":"success"}
 
